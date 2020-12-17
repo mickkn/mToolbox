@@ -1,6 +1,5 @@
 import os
 from os.path import basename
-#import comic2pdf
 import argparse
 from datetime import datetime
 from shutil import copyfile
@@ -42,7 +41,18 @@ def extract_cbz(filename, tmpdirname):
 
 def fix_files(arguments):
 
-    extract_cbr(arguments.input, defaultOutputFolder)
+    if os.path.splitext(arguments.input)[-1] == '.cbr':
+        print("Extracting CBR...")
+        extract_cbr(arguments.input, defaultOutputFolder)
+    elif os.path.splitext(arguments.input)[-1] == '.cbz':
+        print("Extracting CBZ...")
+        extract_cbz(arguments.input, defaultOutputFolder)
+    elif os.path.isdir(arguments.input):
+        print("Processing folder")
+        shutil.copytree(arguments.input, defaultOutputFolder)
+    else:
+        print("Invalid input")
+        return
 
     file_list = []
 
@@ -56,11 +66,14 @@ def fix_files(arguments):
             #print(root+file)
             last_dir = root.split(os.sep)[-1].replace(" ", "_")
             file_ext = file.split(".")[-1]
-            file_name = "%04d" % int(file.split(".")[0])
+            print(file)
+            print(int(''.join(filter(str.isdigit, file))))
+            file_name = "%d%06d" % (int(''.join(filter(str.isdigit, last_dir))), int(''.join(filter(str.isdigit, file))))
+            #file_name = "%04d" % int(file.split(".")[0])
             #print(f"Lastdir: {last_dir}")
             #print(f"Fileext: {file_ext}")
             #print(f"Filename: {file_name}")
-            new_file_name = f"{last_dir}_{file_name}.{file_ext}"
+            new_file_name = f"{file_name}.{file_ext}"
             print(f"Creating {new_file_name}")
             source = os.path.join(root, file)
             destination = os.path.join(arguments.output, new_file_name)
@@ -71,7 +84,8 @@ def fix_files(arguments):
             im = Image.open(destination)
             if im.mode != 'RGB':
                 im.convert('RGB')
-            im.save(destination)
+                im.save(destination)
+            im.close()
             #print(fullOutputPath)
 
     if os.path.exists(fullOutputPath):
