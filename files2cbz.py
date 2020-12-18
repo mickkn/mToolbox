@@ -30,6 +30,8 @@ def parser():
                         help="path to output")
     parser.add_argument("--dontrename", action='store_true',
                         help="Name image files with included digits and added zeroes")
+    parser.add_argument("--onlyextract", action='store_true',
+                        help="Only extract files from input")
     print('\n' + str(parser.parse_args()) + '\n')
 
     return parser.parse_args()
@@ -44,8 +46,8 @@ def extract_cbz(filename, tmpdirname):
     zip_file.extractall(tmpdirname)
     zip_file.close()
 
-def extract_pdf(arguments, tmpdirname):
-    result = pdf2jpg.convert_pdf2jpg(arguments.input, tmpdirname, dpi=300, pages="ALL")
+def extract_pdf(filename, tmpdirname):
+    result = pdf2jpg.convert_pdf2jpg(filename, tmpdirname, dpi=300, pages="ALL")
     if not result:
         print("WIN ERROR 2 ? - You will probably have to install JAVA and restart terminal or system")
 
@@ -62,7 +64,7 @@ def fix_files(arguments):
         if not os.path.exists(defaultOutputFolder):
             os.makedirs(defaultOutputFolder)
         extract_cbz(arguments.input, defaultOutputFolder)
-    elif os.path.splitext(arguments.input)[-1] == '.cbz':
+    elif os.path.splitext(arguments.input)[-1] == '.pdf':
         print("Extracting PDF...")
         extract_pdf(arguments.input, defaultOutputFolder)
     elif os.path.isdir(arguments.input):
@@ -179,4 +181,5 @@ if __name__ == "__main__":
     args = parser()
 
     files = fix_files(args)
-    create_cbz(args, files)
+    if args.onlyextract == False:
+        create_cbz(args, files)
