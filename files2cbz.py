@@ -41,6 +41,9 @@ def extract_cbz(filename, tmpdirname):
 
 def fix_files(arguments):
 
+    if not os.path.exists(defaultOutputFolder):
+        os.makedirs(defaultOutputFolder)
+
     if os.path.splitext(arguments.input)[-1] == '.cbr':
         print("Extracting CBR...")
         extract_cbr(arguments.input, defaultOutputFolder)
@@ -66,9 +69,9 @@ def fix_files(arguments):
             #print(root+file)
             last_dir = root.split(os.sep)[-1].replace(" ", "_")
             file_ext = file.split(".")[-1]
-            print(file)
-            print(int(''.join(filter(str.isdigit, file))))
-            file_name = "%d%06d" % (int(''.join(filter(str.isdigit, last_dir))), int(''.join(filter(str.isdigit, file))))
+            #print(file)
+            #print(int(''.join(filter(str.isdigit, file))))
+            file_name = "%03d%04d" % (int(''.join(filter(str.isdigit, last_dir))), int(''.join(filter(str.isdigit, file))))
             #file_name = "%04d" % int(file.split(".")[0])
             #print(f"Lastdir: {last_dir}")
             #print(f"Fileext: {file_ext}")
@@ -81,10 +84,8 @@ def fix_files(arguments):
             file_list.append(destination)
 
             # Convert file to RGB
-            im = Image.open(destination)
-            if im.mode != 'RGB':
-                im.convert('RGB')
-                im.save(destination)
+            im = Image.open(destination).convert('RGB')
+            im.save(destination)
             im.close()
             #print(fullOutputPath)
 
@@ -94,6 +95,13 @@ def fix_files(arguments):
             shutil.rmtree(fullOutputPath)
         except:
             print("Failed to remove %s" % fullOutputPath)
+
+    if os.path.exists(defaultOutputFolder):
+        print("Clean up (%s)" % defaultOutputFolder)
+        try:
+            shutil.rmtree(defaultOutputFolder)
+        except:
+            print("Failed to remove %s" % defaultOutputFolder)
 
     return file_list
 
@@ -108,14 +116,14 @@ def create_cbz(arguments, file_list):
     for file in file_list:
         zipObj.write(file, basename(file))
     zipObj.close()
-    """
+
     if os.path.exists(arguments.output):
         print("Clean up (%s)" % arguments.output)
         try:
             shutil.rmtree(arguments.output)
         except:
             print("Failed to remove %s" % arguments.output)
-    """
+
 
 if __name__ == "__main__":
 
