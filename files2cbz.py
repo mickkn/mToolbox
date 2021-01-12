@@ -1,17 +1,16 @@
-import os
-from os.path import basename
 import argparse
-from datetime import datetime
-from shutil import copyfile
-import shutil
-from pathlib import Path
-import zipfile
+import os
 import patoolib
+import shutil
 import sys
-from pdf2jpg import pdf2jpg
 import threading
+import zipfile
 
+from datetime import datetime
+from os.path import basename
+from pdf2jpg import pdf2jpg
 from PIL import Image
+from shutil import copyfile
 
 defaultOutputFolder = datetime.now().strftime("%Y%m%d_%H%M%S")
 fullOutputPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), defaultOutputFolder)
