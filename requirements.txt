@@ -1,3 +1,6 @@
-pdf2jpg~=1.0
-patool~=1.12
-Pillow~=8.0.1
+pdf2jpg
+fpdf
+Pillow
+natsort
+img2pdf
+ocrmypdf
