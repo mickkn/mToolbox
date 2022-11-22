@@ -10,6 +10,7 @@ from datetime import datetime
 from os.path import basename
 from pdf2jpg import pdf2jpg
 from PIL import Image
+Image.MAX_IMAGE_PIXELS = None   # disables the warning
 from shutil import copyfile
 
 defaultOutputFolder = datetime.now().strftime("%Y%m%d_%H%M%S")
