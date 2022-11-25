@@ -1,15 +1,16 @@
 import argparse
 import os
-import patoolib
 import shutil
 import sys
 import threading
 import zipfile
-
 from datetime import datetime
 from os.path import basename
-from pdf2jpg import pdf2jpg
+
+import patoolib
 from PIL import Image
+from pdf2jpg import pdf2jpg
+
 Image.MAX_IMAGE_PIXELS = None   # disables the warning
 from shutil import copyfile
 
@@ -26,13 +27,19 @@ def parser():
     # Construct the argument parse and parse the arguments
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description=description)
     parser.add_argument("-i", "--input", nargs='+', default=None, 
-                        help="path to comics cbr, cbz, pdf or folder with images")
+                        help="path(s) to comics cbr, cbz, pdf or folder with images")
     parser.add_argument("-o", "--output", type=str, default="output", 
                         help="path to output")
     parser.add_argument("--dontrename", action='store_true',
                         help="Name image files with included digits and added zeroes")
     parser.add_argument("--onlyextract", action='store_true',
                         help="Only extract files from input")
+    parser.add_argument("--silence", action='store_true',
+                        help="Don't do print outs.")
+    parser.add_argument("--subfolders", action='store_true',
+                        help="Instead of using multiple inputs just use all sub folders in folder")
+    #parser.add_argument("--subfiles", action='store_true',
+    #                    help="Instead of using multiple inputs just use all sub files in folder")
     print('\n' + str(parser.parse_args()) + '\n')
 
     return parser.parse_args()
@@ -79,7 +86,7 @@ def create_cbz(arguments, input, file_list, index):
 
     # Delete the output folder
     if os.path.exists(arguments.output+str(index)):
-        print("Clean up (%s)" % arguments.output+str(index))
+        print(f"Clean up ({arguments.output + str(index)})")
         try:
             shutil.rmtree(arguments.output+str(index))
         except:
@@ -154,7 +161,8 @@ def fix_files(arguments, input, index):
             
             # Determine new file name and print it out to see the progress
             new_file_name = file_name + file_ext
-            print(f"Creating {new_file_name}")
+            if not arguments.silence:
+                print(f"Creating {new_file_name}")
 
             # Determine source path for upcoming copy
             source = os.path.join(root, file)
@@ -205,6 +213,15 @@ if __name__ == "__main__":
     args = parser()
 
     threads = []
+
+    # If sub folders are used, save all sub folders in the args.input
+    if args.subfolders:
+        sub_folders = []
+        for sub_folder, _, _ in os.walk(args.input[0]):
+            if sub_folder is not args.input[0]:
+                print(sub_folder)
+                sub_folders.append(sub_folder)
+        args.input = sub_folders
 
     for item in args.input:
         thread = threading.Thread(target=fix_files, args=(args, item, args.input.index(item)))
