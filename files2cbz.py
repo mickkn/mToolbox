@@ -14,8 +14,8 @@ from pdf2jpg import pdf2jpg
 Image.MAX_IMAGE_PIXELS = None   # disables the warning
 from shutil import copyfile
 
-defaultOutputFolder = datetime.now().strftime("%Y%m%d_%H%M%S")
-fullOutputPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), defaultOutputFolder)
+default_output_folder = datetime.now().strftime("%Y%m%d_%H%M%S")
+fullOutputPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), default_output_folder)
 
 
 def parser():
@@ -25,24 +25,22 @@ def parser():
     description = ""
 
     # Construct the argument parse and parse the arguments
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description=description)
-    parser.add_argument("-i", "--input", nargs='+', default=None, 
-                        help="path(s) to comics cbr, cbz, pdf or folder with images")
-    parser.add_argument("-o", "--output", type=str, default="output", 
+    arguments = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter, description=description)
+    arguments.add_argument("-i", "--input", nargs='+', default=None,
+                        help="path(s) to comics cbr, cbz, pdf or folder with images, or even folder with sub folders")
+    arguments.add_argument("-o", "--output", type=str, default="output",
                         help="path to output")
-    parser.add_argument("--dontrename", action='store_true',
+    arguments.add_argument("--dontrename", action='store_true',
                         help="Name image files with included digits and added zeroes")
-    parser.add_argument("--onlyextract", action='store_true',
+    arguments.add_argument("--onlyextract", action='store_true',
                         help="Only extract files from input")
-    parser.add_argument("--silence", action='store_true',
+    arguments.add_argument("--silence", action='store_true',
                         help="Don't do print outs.")
-    parser.add_argument("--subfolders", action='store_true',
-                        help="Instead of using multiple inputs just use all sub folders in folder")
-    #parser.add_argument("--subfiles", action='store_true',
-    #                    help="Instead of using multiple inputs just use all sub files in folder")
-    print('\n' + str(parser.parse_args()) + '\n')
+    arguments.add_argument("--subfolders", action='store_true',
+                        help="Instead of using multiple inputs just use all sub folders in folder (creating multiple cbz files)")
+    print('\n' + str(arguments.parse_args()) + '\n')
 
-    return parser.parse_args()
+    return arguments.parse_args()
 
 
 def extract_cbr(filename, tmpdirname):
@@ -93,56 +91,65 @@ def create_cbz(arguments, input, file_list, index):
             print("Failed to remove %s" % arguments.output+str(index))
 
 
-def fix_files(arguments, input, index):
+def fix_files(arguments, inputs, index):
+    """Fix files
 
-    outputFolder = defaultOutputFolder+"_"+str(index)
+    Args:
+        arguments: argument parser.
+        inputs: input file or folder.
+        index: index of input.
 
-    if os.path.splitext(input)[-1] == '.cbr':
+    Returns:
+        None.
+    """
+
+    output_folder = default_output_folder+"_"+str(index)
+
+    if os.path.splitext(inputs)[-1] == '.cbr':
         print("Extracting CBR...")
-        if not os.path.exists(outputFolder):
-            os.makedirs(outputFolder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
         if arguments.onlyextract:
-            extract_cbr(input, os.path.splitext(input)[0])
+            extract_cbr(inputs, os.path.splitext(inputs)[0])
             return
         else:
-            extract_cbr(input, outputFolder)
-    elif os.path.splitext(input)[-1] == '.cbz':
+            extract_cbr(inputs, output_folder)
+    elif os.path.splitext(inputs)[-1] == '.cbz':
         print("Extracting CBZ...")
-        if not os.path.exists(outputFolder):
-            os.makedirs(outputFolder)
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
         if arguments.onlyextract:
-            extract_pdf(input, os.path.splitext(input)[0])
+            extract_pdf(inputs, os.path.splitext(inputs)[0])
             return
         else:
-            extract_cbz(input, outputFolder)
-    elif os.path.splitext(input)[-1] == '.pdf':
+            extract_cbz(inputs, output_folder)
+    elif os.path.splitext(inputs)[-1] == '.pdf':
         print("Extracting PDF...")
         if arguments.onlyextract:
-            extract_pdf(input, os.path.splitext(input)[0])
+            extract_pdf(inputs, os.path.splitext(inputs)[0])
             return
         else:
-            extract_pdf(input, outputFolder)
-    elif os.path.isdir(input):
+            extract_pdf(inputs, output_folder)
+    elif os.path.isdir(inputs):
         print("Processing folder")
-        shutil.copytree(input, outputFolder)
+        shutil.copytree(inputs, output_folder)
     else:
         print("Invalid input")
         return
 
-    # Init a file list
+    # Init a file list.
     file_list = []
 
     # Fix all files in one folder with sub-folder names in each file.
-
     if not os.path.exists(arguments.output+str(index)):
         os.makedirs(arguments.output+str(index))
 
-    # Go through all images
-    for root, dirs, files in os.walk(outputFolder, topdown=False):
+    # Go through all images.
+    for root, dirs, files in os.walk(output_folder, topdown=False):
         for file in sorted(files):
-            
-            # Get directory name of last folder in tree unless defaultOutputFolder
-            if root.split(os.sep)[-1] == outputFolder:
+
+            # Get directory name of last folder in tree unless default_output_folder.
+            if root.split(os.sep)[-1] == output_folder:
                 last_dir = None
             else:
                 last_dir = root.split(os.sep)[-1].replace(" ", "_")
@@ -150,24 +157,24 @@ def fix_files(arguments, input, index):
             # Get file extension
             file_ext = os.path.splitext(file)[-1]
 
-            # Rename images is chosen (cbz don't like 1.jpg and 10.jpg so zeroes should be added)
+            # Rename images is chosen (cbz don't like 1.jpg and 10.jpg so zeroes should be added).
             if arguments.dontrename:
                 file_name = os.path.splitext(file)[0]
             else:
-                if last_dir == None:
+                if last_dir is None:
                     file_name = "%04d" % (int(''.join(filter(str.isdigit, file))))
                 else:
                     file_name = "%03d%04d" % (int(''.join(filter(str.isdigit, last_dir))), int(''.join(filter(str.isdigit, file))))
             
-            # Determine new file name and print it out to see the progress
+            # Determine new file name and print it out to see the progress.
             new_file_name = file_name + file_ext
             if not arguments.silence:
                 print(f"Creating {new_file_name}")
 
-            # Determine source path for upcoming copy
+            # Determine source path for upcoming copy.
             source = os.path.join(root, file)
 
-            # Determine destination for upcoming copy
+            # Determine destination for upcoming copy.
             destination = os.path.join(arguments.output+str(index), new_file_name)
 
             # Copy file and check if file already exist, and exit if duplicate, because we will miss a file if we overwrite.
@@ -176,32 +183,24 @@ def fix_files(arguments, input, index):
                 print("ERROR: Duplicate filename")
                 sys.exit()
             
-            # Add the file to a list of files to return
+            # Add the file to a list of files to return.
             file_list.append(destination)
 
-            # Convert file to RGB (readers don't like files with alpha channels or something)
+            # Convert file to RGB (readers don't like files with alpha channels or something).
             im = Image.open(destination).convert('RGB')
             im.save(destination)
             im.close()
 
     # Remove folders
-    """
-    if os.path.exists(fullOutputPath):
-        print("Clean up (%s)" % fullOutputPath)
+    if os.path.exists(output_folder):
+        print("Clean up (%s)" % output_folder)
         try:
-            shutil.rmtree(fullOutputPath)
-        except:
-            print("Failed to remove %s" % fullOutputPath)
-    """
-    if os.path.exists(outputFolder):
-        print("Clean up (%s)" % outputFolder)
-        try:
-            shutil.rmtree(outputFolder)
-        except:
-            print("Failed to remove %s" % outputFolder)
+            shutil.rmtree(output_folder)
+        except Exception as e:
+            print(f"Failed to remove {output_folder} : {e}")
 
     if not args.onlyextract:
-        create_cbz(args, input, file_list, index)
+        create_cbz(args, inputs, file_list, index)
 
 
 if __name__ == "__main__":
@@ -230,7 +229,3 @@ if __name__ == "__main__":
 
     for thread in threads:
         thread.join()
-
-        #files = fix_files(args, item)
-        #if not args.onlyextract:
-        #    create_cbz(args, item, files)
