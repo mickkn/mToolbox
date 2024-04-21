@@ -1,7 +1,9 @@
-pdf2jpg
-fpdf
-Pillow
-natsort
-img2pdf
-ocrmypdf
-patool
+pdf2jpg==1.1
+fpdf==1.7.2
+Pillow==10.0.1
+natsort==8.4.0
+img2pdf==0.4.4
+ocrmypdf==14.4.0
+patool==1.12
+opencv-python==4.8.0.76
+tqdm==4.66.1
