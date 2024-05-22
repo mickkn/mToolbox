@@ -1,10 +1,12 @@
 import os
 import argparse
 
+
 def create_folders(common_name, start_number, end_number, num_digits):
     for number in range(start_number, end_number + 1):
         folder_name = f"{common_name}_{str(number).zfill(num_digits)}"
         os.makedirs(folder_name, exist_ok=True)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create multiple folders with common name and incremented number.")

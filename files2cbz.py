@@ -7,13 +7,13 @@ import sys
 import zipfile
 from datetime import datetime
 from os.path import basename
-
+from shutil import copyfile
+from typing import List
 import patoolib
-from PIL import Image
 from pdf2jpg import pdf2jpg
+from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None  # disables the warning
-from shutil import copyfile
 
 default_output_folder = datetime.now().strftime("%Y%m%d_%H%M%S")
 fullOutputPath = os.path.join(
@@ -21,9 +21,11 @@ fullOutputPath = os.path.join(
 )
 
 
-def parser():
-    """
-    @brief    Parser function to get all the arguments
+def parser() -> argparse.Namespace:
+    """Parser function to get all the arguments
+
+    Returns:
+        Argument parser
     """
     description = ""
 
@@ -69,27 +71,62 @@ def parser():
     return arguments.parse_args()
 
 
-def extract_cbr(filename, tmpdirname):
-    patoolib.extract_archive(filename, outdir=tmpdirname)
+def extract_cbr(filename: str, temp_dir_name: str) -> None:
+    """Extract CBR file
+
+    Args:
+        filename: input file name.
+        temp_dir_name: temporary directory name.
+
+    Returns:
+        None
+    """
+    patoolib.extract_archive(filename, outdir=temp_dir_name)
 
 
-def extract_cbz(filename, tmpdirname):
+def extract_cbz(filename: str, temp_dir_name: str) -> None:
+    """Extract CBZ file
+
+    Args:
+        filename: input file name.
+        temp_dir_name: temporary directory name.
+
+    Returns:
+        None
+    """
     zip_file = zipfile.ZipFile(filename, "r")
-    zip_file.extractall(tmpdirname)
+    zip_file.extractall(temp_dir_name)
     zip_file.close()
 
 
-def extract_pdf(filename, tmpdirname):
-    result = pdf2jpg.convert_pdf2jpg(filename, tmpdirname, dpi=300, pages="ALL")
-    if not result:
+def extract_pdf(filename: str, temp_dir_name: str) -> None:
+    """Extract PDF file
+
+    Args:
+        filename: input file name.
+        temp_dir_name: temporary directory name.
+
+    Returns:
+        None
+    """
+    data = pdf2jpg.convert_pdf2jpg(filename, temp_dir_name, dpi=300, pages="ALL")
+    if not data:
         print(
             "WIN ERROR 2 ? - You will probably have to install JAVA and restart terminal or system"
         )
 
 
-def create_cbz(arguments, inputs, file_list, index):
-    """
-    @brief    Create the cbz file output
+def create_cbz(arguments: argparse.Namespace, inputs: str, file_list: List, index: int) -> None:
+    """Create CBZ file
+
+    Args:
+        arguments: argument parser.
+        inputs: input file or folder.
+        file_list: list of files to include in the CBZ file.
+        index: index of input.
+
+    Returns:
+        None.
     """
 
     # Print
@@ -102,7 +139,9 @@ def create_cbz(arguments, inputs, file_list, index):
     print("    %s.cbz" % os.path.join(input_file_path, out_file_name))
 
     # Create a zip object
-    zip_obj = zipfile.ZipFile(os.path.join(input_file_path, out_file_name) + ".cbz", "w")
+    zip_obj = zipfile.ZipFile(
+        str(os.path.join(input_file_path, out_file_name) + ".cbz"), "w"
+    )
 
     # Zip all files
     for file in file_list:
@@ -118,7 +157,7 @@ def create_cbz(arguments, inputs, file_list, index):
             print(f"Failed to remove {arguments.output + str(index)} : {e}")
 
 
-def fix_files(arguments, inputs, index):
+def fix_files(arguments, inputs, index) -> None:
     """Fix files
 
     Args:
@@ -129,7 +168,6 @@ def fix_files(arguments, inputs, index):
     Returns:
         None.
     """
-
     output_folder = default_output_folder + "_" + str(index)
 
     if os.path.splitext(inputs)[-1] == ".cbr":
@@ -225,6 +263,8 @@ def fix_files(arguments, inputs, index):
             copyfile(source, destination)
             if destination in file_list:
                 print("ERROR: Duplicate filename")
+                print("This error typically happens when the same filename is used in multiple folders, but also if "
+                      "the digits is split with a space, dash or sommething, try to use --dontrename")
                 sys.exit()
 
             # Add the file to a list of files to return.
@@ -248,9 +288,6 @@ def fix_files(arguments, inputs, index):
 
 
 if __name__ == "__main__":
-    """
-    @brief    Main entry point
-    """
 
     args = parser()
 
