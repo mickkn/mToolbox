@@ -8,3 +8,5 @@ ocrmypdf==14.4.0
 patool==1.12
 opencv-python==4.8.0.76
 tqdm==4.66.1
+mss~=9.0.2
+pynput~=1.7.7
