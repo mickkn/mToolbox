@@ -123,7 +123,7 @@ class ScreenShotTool:
 
         # Save the image
         os.makedirs(self.output_folder, exist_ok=True)
-        img.save(f"{self.output_folder}/screenshot_{self.counter}.png")
+        img.save(f"{self.output_folder}/screenshot_{self.counter:04d}.png")
         self.counter += 1
 
 
