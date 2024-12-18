@@ -1,7 +1,8 @@
 import os
 import argparse
 import img2pdf
-
+import PyPDF2
+from pprint import pprint
 
 image_types = (".jpg", ".jpeg")
 
@@ -34,37 +35,69 @@ def arg_parser():
 
 
 def create_pdf(arguments):
-
-    """Create images to pdf
+    """Create images or pdf files to pdf
 
     Args:
         arguments: argument parser
 
     Returns:
-
+        None
     """
 
-    # Contains the list of all images to be converted to PDF.
+    # Contains the list of all images and PDFs to be converted to a single PDF.
     image_list = []
+    pdf_list = []
 
     folder = arguments.inputs
 
     # Find files
     for dir_path, _, filenames in os.walk(folder):
-        for filename in [f for f in filenames if f.endswith(image_types)]:
+        for filename in filenames:
             full_path = os.path.join(dir_path, filename)
-            image_list.append(full_path)
+            if filename.endswith(image_types):
+                image_list.append(full_path)
+            elif filename.endswith(".pdf"):
+                pdf_list.append(full_path)
 
     # Sort files
-    # Sort the images by name.
     image_list.sort()
-    for i in range(0, len(image_list)):
-        print(image_list[i])
+    pdf_list.sort()
 
-    # Convert images to PDF
+    pprint(pdf_list)
+
+    # Handle the case where there are no images or PDFs
+    if not image_list and not pdf_list:
+        print("Error: No images or PDFs found in the specified folder.")
+        return  # Exit the function if no valid files are found
+
+    # Create a temporary PDF from images if there are images
+    if image_list:
+        with open("temp_images.pdf", "wb") as f:
+            f.write(img2pdf.convert(image_list))
+    else:
+        # If no images are found, create an empty temporary PDF to keep the workflow intact
+        with open("temp_images.pdf", "wb") as f:
+            f.write(b"")  # Empty PDF file that won't cause an error
+
+    # Merge all PDFs
+    merger = PyPDF2.PdfMerger()
+
+    # Add the converted images PDF only if there were images
+    if image_list:
+        merger.append("temp_images.pdf")
+
+    # Add the other PDFs if available
+    for pdf in pdf_list:
+        merger.append(pdf)
+
+    # Write out the merged PDF
     with open(arguments.output + ".pdf", "wb") as f:
-        f.write(img2pdf.convert(image_list))
+        merger.write(f)
 
+    # Clean up temporary file
+    os.remove("temp_images.pdf")
+
+    # If OCR is required, run OCR on the output PDF
     if arguments.ocr:
         create_ocr(arguments.output + ".pdf", arguments)
 
