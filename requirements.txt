@@ -15,5 +15,6 @@ mss
 pynput
 PyPDF2
 moviepy
+yt-dlp
 mss
 patool
